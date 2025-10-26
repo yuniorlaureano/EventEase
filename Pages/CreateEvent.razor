@@ -1,0 +1,61 @@
+@page "/events/create"
+@using EventEase.Models
+@using EventEase.Services
+@inject IEventService EventService
+@inject NavigationManager Navigation
+@inject ILogger<CreateEvent> Logger 
+
+<h3>Create Event</h3>
+
+<EditForm Model="@eventModel" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group mb-3">
+        <label for="name">@nameof(Event.Name)</label>
+        <InputText id="name" @bind-Value="eventModel.Name" class="form-control" />
+        <ValidationMessage For="@(() => eventModel.Name)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="date">@nameof(Event.Date)</label>
+        <InputDate id="date" @bind-Value="eventModel.Date" class="form-control" />
+        <ValidationMessage For="@(() => eventModel.Date)" />
+        <small class="form-text text-muted">Date must be today or in the future</small>
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="location">@nameof(Event.Location)</label>
+        <InputText id="location" @bind-Value="eventModel.Location" class="form-control" />
+        <ValidationMessage For="@(() => eventModel.Location)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create Event</button>
+    <button type="button" class="btn btn-secondary" @onclick="NavigateToEvents">Cancel</button>
+</EditForm>
+
+@code {
+    private Event eventModel = new() { Date = DateTime.Now };
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            Logger.LogInformation("Creating event: {EventName} on {EventDate} at {EventLocation}", 
+                eventModel.Name, eventModel.Date, eventModel.Location);
+            await EventService.AddEventAsync(eventModel);
+            eventModel = new() { Date = DateTime.Now };
+            Navigation.NavigateTo("/events");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating event");
+            // In a real application, you would want to show this error to the user
+        }
+    }
+
+    private void NavigateToEvents()
+    {
+        Navigation.NavigateTo("/events");
+    }
+}

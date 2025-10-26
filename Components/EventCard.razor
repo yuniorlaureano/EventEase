@@ -1,0 +1,16 @@
+@using EventEase.Models
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">@Event?.Name</h5>
+        <p class="card-text">
+            <strong>Date:</strong> @(Event?.Date.ToShortDateString())<br />
+            <strong>Location:</strong> @Event?.Location
+        </p>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Event Event { get; set; } = default!;
+}

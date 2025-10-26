@@ -1,0 +1,91 @@
+@using EventEase.Models
+@using EventEase.Services
+@inject IAttendanceService AttendanceService
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Attendees (@attendees.Count)</h5>
+    </div>
+    <div class="card-body">
+        @if (!attendees.Any())
+        {
+            <p>No attendees registered yet.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Registration Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var attendee in attendees)
+                        {
+                            <tr>
+                                <td>@attendee.AttendeeName</td>
+                                <td>@attendee.AttendeeEmail</td>
+                                <td>@attendee.RegistrationDate.ToShortDateString()</td>
+                                <td>@attendee.Status</td>
+                                <td>
+                                    <div class="btn-group">
+                                        @if (attendee.Status == AttendanceStatus.Registered)
+                                        {
+                                            <button class="btn btn-success btn-sm" @onclick="() => UpdateStatus(attendee.Id, AttendanceStatus.Attended)">Mark Attended</button>
+                                            <button class="btn btn-danger btn-sm" @onclick="() => UpdateStatus(attendee.Id, AttendanceStatus.NoShow)">Mark No-Show</button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int EventId { get; set; }
+
+    private List<Attendance> attendees = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAttendees();
+        AttendanceService.OnChange += HandleAttendanceChange;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAttendees();
+    }
+
+    private async void HandleAttendanceChange()
+    {
+        await LoadAttendees();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AttendanceService.OnChange -= HandleAttendanceChange;
+    }
+
+    private async Task LoadAttendees()
+    {
+        attendees = await AttendanceService.GetEventAttendeesAsync(EventId);
+    }
+
+    private async Task UpdateStatus(int attendanceId, AttendanceStatus status)
+    {
+        await AttendanceService.UpdateAttendanceStatusAsync(attendanceId, status);
+        await LoadAttendees();
+    }
+}
